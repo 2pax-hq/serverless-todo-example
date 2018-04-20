@@ -64,8 +64,8 @@ Resources:
             responseTemplates:
               application/json: |
                 {
-                  "message": $context.error.messageString,
-                  "code": $context.error.responseType
+                  "code": "$context.error.responseType",
+                  "message": $context.error.messageString
                 }
           DEFAULT_5XX:
             defaultResponse: false
@@ -74,8 +74,8 @@ Resources:
             responseTemplates: 
               application/json: |
                 {
-                  "message": $context.error.messageString,
-                  "code": "INTERNAL_ERROR"
+                  "code": "INTERNAL_ERROR",
+                  "message": $context.error.messageString
                 }
 
         # Models
