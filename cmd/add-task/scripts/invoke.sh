@@ -1,6 +1,6 @@
 #!/bin/sh
 
 dir=`dirname $0`
-fname=AddTodo
+fname=AddTask
 
 source $dir/../../invoke.sh
