@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/smalleats/serverless-todo-example/pkg/errors"
+	"github.com/smalleats/serverless-todo-example/errors"
 )
 
 func TestWrap(t *testing.T) {

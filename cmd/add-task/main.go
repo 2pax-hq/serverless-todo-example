@@ -7,8 +7,8 @@ import (
 
 	"github.com/aws/aws-lambda-go/lambda"
 
-	"github.com/smalleats/serverless-todo-example/pkg/errors"
-	"github.com/smalleats/serverless-todo-example/pkg/todo"
+	"github.com/smalleats/serverless-todo-example/errors"
+	"github.com/smalleats/serverless-todo-example/todo"
 )
 
 type request struct {
