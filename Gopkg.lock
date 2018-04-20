@@ -4,22 +4,12 @@
 [[projects]]
   branch = "master"
   name = "github.com/aws/aws-lambda-go"
-  packages = [
-    "lambda",
-    "lambda/messages",
-    "lambdacontext"
-  ]
+  packages = ["lambda","lambda/messages","lambdacontext"]
   revision = "ea03c2814414b2223eff860ed2286a83ed8a195c"
-
-[[projects]]
-  name = "github.com/satori/go.uuid"
-  packages = ["."]
-  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
-  version = "v1.2.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8990d638be254f65b7f64288918e81880099b670b49a9a5d15f631451d169418"
+  inputs-digest = "8427e98c5a37c5c68892c28cad0065a019b49b4850b79215a5e7a18c4d17e90b"
   solver-name = "gps-cdcl"
   solver-version = 1
