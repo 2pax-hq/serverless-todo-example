@@ -97,9 +97,9 @@ Resources:
             properties:
               id:
                 type: string
-              note:
+              done:
                 type: string
-              checked:
+              note:
                 type: string
               created_at:
                 type: string
