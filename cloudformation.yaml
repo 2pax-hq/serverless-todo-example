@@ -2,7 +2,7 @@
 
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: "AWS::Serverless-2016-10-31"
-Description: "TODO Example"
+Description: "To-Do Example"
 
 Parameters:
   StageName:
@@ -10,10 +10,10 @@ Parameters:
 
 Resources:
 
-  TodoAPI:
+  ToDoAPI:
     Type: "AWS::Serverless::Api"
     Properties:
-      Name: !Sub "TodoAPI - ${StageName}"
+      Name: !Sub "To-Do API - ${StageName}"
       StageName: !Ref StageName
 
       MethodSettings: [{
@@ -117,14 +117,14 @@ Resources:
         # Paths
         paths:
 
-          #
-          # list tasks
-          #
-          /task:
+          /tasks:
 
+            #
+            # add task
+            #
             post:
-              summary: Create Task
-              operationId: createTask
+              summary: Add task
+              operationId: addTask
 
               parameters:
                 - name: body
@@ -253,7 +253,7 @@ Outputs:
     Value: !Join
       - ''
       - - https://
-        - !Ref TodoAPI
+        - !Ref ToDoAPI
         - '.execute-api.'
         - !Ref 'AWS::Region'
         - '.amazonaws.com/'
