@@ -1,6 +1,6 @@
 #!/bin/sh
 
-dir=`dirname $0`
+dir=$(dirname "$0")
 fname=AddTask
 
-source $dir/../../invoke.sh
+source "$dir/../../invoke.sh"
