@@ -4,9 +4,16 @@ import (
 	"time"
 )
 
+// ValidationError represents an error while adding a task.
 type ValidationError string
 
-func (e ValidationError) Error() string { return "validation error: " + string(e) }
+func (e ValidationError) Error() string { return "validation failed: " + string(e) }
+
+// UnknownTaskError string represents a failure to find the specified task in
+// the store.
+type UnknownTaskError string
+
+func (e UnknownTaskError) Error() string { return "unknown task: " + string(e) }
 
 // Task represents a to-do item
 type Task struct {

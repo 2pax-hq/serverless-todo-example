@@ -235,9 +235,6 @@ Resources:
       CodeUri: cmd/add-task/
       Tags:
         Environment: !Ref StageName
-      Environment:
-        Variables:
-          TWOPAX_STAGE: !Ref StageName
 
   # Allow APIGW to invoke the function
   AddTaskResourcePermission:
@@ -247,6 +244,29 @@ Resources:
       FunctionName: !Ref AddTask
       Principal: apigateway.amazonaws.com
 
+  #
+  # Get Task Function
+  #
+  GetTask:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      FunctionName: !Sub "GetTask${StageName}"
+      Handler: handler
+      Runtime: go1.x
+      Timeout: 5
+      CodeUri: cmd/get-task/
+      Tags:
+        Environment: !Ref StageName
+
+  # Allow APIGW to invoke the function
+  GetTaskResourcePermission:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !Ref GetTask
+      Principal: apigateway.amazonaws.com
+
+      
 Outputs:
   ApiUrl:
     Description: URL of your API endpoint

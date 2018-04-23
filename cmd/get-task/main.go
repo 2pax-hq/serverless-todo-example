@@ -12,24 +12,24 @@ import (
 )
 
 type request struct {
-	Note string `json:"note"`
+	Task string `json:"task"`
 }
 
-type adder interface {
-	Add(string) (todo.Task, error)
+type getter interface {
+	Get(string) (todo.Task, error)
 }
 
 type handler func(request) (todo.Task, error)
 
-func getHandler(store adder) handler {
+func getHandler(store getter) handler {
 	return func(r request) (todo.Task, error) {
-		t, err := store.Add(r.Note)
+		t, err := store.Get(r.Task)
 
 		switch err.(type) {
 		case nil:
 			return t, nil
-		case todo.ValidationError:
-			return t, errors.WithCode(err, errors.CodeInvalidInput)
+		case todo.UnknownTaskError:
+			return t, errors.Wrap(err, "TASK_NOT_FOUND", "Task not found")
 		default:
 			return t, errors.WithCode(err, errors.CodeApplicationError)
 		}

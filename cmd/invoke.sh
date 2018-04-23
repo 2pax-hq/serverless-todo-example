@@ -12,10 +12,8 @@ set -e
 
 srcdir=$dir/..
 
-
 eventfile="$dir/example-event.json"
 
-config="scripts/example-config.json"
 skipbuild=0
 
 usage()
@@ -27,7 +25,6 @@ Invoke function locally with the following options.
 
 OPTIONS:
    -h      Show this message
-   -c      Path to local config json
    -e      Path to local event file to be used as input
    -s      Skip build step
 EOF
@@ -42,9 +39,6 @@ do
           ;;
       e)
           eventfile=$OPTARG
-          ;;
-      c)
-          config="scripts/$OPTARG"
           ;;
       s)
           skipbuild=1
@@ -63,11 +57,6 @@ then
 fi
 
 
-# TWOPAX_CONFIG_OVERRIDE sets configuration options from local file instead of SSM parameter store.
-# should be the name of a file in the scripts directory.
-
-TWOPAX_STAGE=Local \
-TWOPAX_CONFIG_OVERRIDE=$config \
 sam local invoke "$fname" \
   -t "$srcdir/../../cloudformation.yaml" \
   -e "$eventfile"
