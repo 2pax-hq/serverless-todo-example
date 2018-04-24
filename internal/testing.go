@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	mrand "math/rand"
 	"os"
 	"os/exec"
@@ -28,7 +27,10 @@ func EqualJSON(lhs, rhs string) (bool, error) {
 	return reflect.DeepEqual(l, r), nil
 }
 
-// SamInvoke uses SAM Local to invoke a Lambda Function handler locally.
+// SamInvoke uses SAM Local to invoke a Lambda Function handler locally and
+// returns the response which can be the successful response or the encoded
+// error response.
+//
 // Requirements:
 // - You must have a `sam` binary installed, see https://github.com/awslabs/aws-sam-local
 //   for more information.
@@ -36,21 +38,21 @@ func EqualJSON(lhs, rhs string) (bool, error) {
 // 	 resource for the with the name specified in `function`.
 // - The Lambda handler specified in the CloudFormation template resource must
 //	 be compiled before running the test.
-func SamInvoke(template, function, event string) (res string, e error) {
+func SamInvoke(template, function, event string) (string, error) {
 
-	// create a tmp dir in the current directory because this will need to be mounted
-	// in the container that sam local invoke uses to execute the binary
 	mrand.Seed(time.Now().Unix())
+	// create a tmp dir in the current directory because it needs to be mounted
+	// within the container that SAM Local uses to execute the binary.
 	d := fmt.Sprintf("test-tmp-%d", mrand.Int())
 	err := os.Mkdir(d, os.ModePerm)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	defer os.RemoveAll(d)
 
 	err = ioutil.WriteFile(d+"/event.json", []byte(event), 0644)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	cmd := exec.Command(
@@ -68,15 +70,12 @@ func SamInvoke(template, function, event string) (res string, e error) {
 	cmd.Stdout = &outb
 	cmd.Stderr = &errb
 
-	if e := cmd.Run(); e != nil {
-		log.Printf("cmd start error: %s\n", e.Error())
-		return "", e
+	if err = cmd.Run(); err != nil {
+		return "", err
 	}
 
-	log.Printf("called invoke, received:\n\nout:\n%s\n\nerr:\n%s\n", outb.String(), errb.String())
-
-	// check for error in stderr, if found return inner value of errorMessage,
-	// which is itself a json string
+	// If error response has been encoded and written to stderr, extract and the
+	// JSON string from errorMessage.
 	r := regexp.MustCompile(`errorMessage\": \"(.*)\",`)
 	match := r.FindStringSubmatch(errb.String())
 	if len(match) == 2 {
@@ -87,6 +86,5 @@ func SamInvoke(template, function, event string) (res string, e error) {
 			return str, nil
 		}
 	}
-
 	return outb.String(), nil
 }

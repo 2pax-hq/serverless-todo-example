@@ -41,6 +41,7 @@ var cmdTests = []struct {
 
 func TestCommand(t *testing.T) {
 	for _, tt := range cmdTests {
+		t.Log(tt.description)
 
 		res, err := internal.SamInvoke(template, "GetTask", tt.event)
 		if err != nil {
@@ -51,7 +52,6 @@ func TestCommand(t *testing.T) {
 		if err != nil {
 			t.Error("unexpected error:", err)
 		}
-
 		if !equal {
 			t.Errorf("expected:\n%v\n\ngot:\n%v\n", tt.expected, res)
 		}
