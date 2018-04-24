@@ -1,8 +1,8 @@
 # serverless-todo-example
 
 Simple to-do app using AWS API Gateway and AWS Lambda. This is the sample code
-to the [detailed walkthrough](https://foo.bar) on error handling in a serverless
-architecture.
+to the [detailed walkthrough](https://medium.com/2pax/fe0e10808732) on error
+handling in a serverless architecture.
 
 ## Prerequisites
 
