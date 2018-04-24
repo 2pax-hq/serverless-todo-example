@@ -16,23 +16,29 @@ deploy the app you must have access to an [AWS](http://aws.amazon.com) account.
 
 ## Build
 
+The app has two commands, one to add and another to get a task. Each is a 
+separate Lambda function and needs to be built separately.
+
     ./cmd/add-task/scripts/build.sh
+
+    ./cmd/get-task/scripts/build.sh
+
 
 ## Invoke
 
-The sample app includes two example events and uses `example-event.json` by
-default. To specify the file use `-e <PATH_TO_EVENT>` when calling the invoke
-script.
+Each command comes with example events and uses `example-event.json` by default.
+To specify the file use `-e <PATH_TO_EVENT>` when calling the invoke script.
 
     ./cmd/add-task/scripts/invoke.sh
 
 
-
 ## Deploy
 
-First, package the CloudFormation template using the following command. Make
-sure to set `S3_BUCKET` correctly by specifying the name of the bucket used to
-store all build artifacts.
+**Note:** Before deploying make sure to build both commands, see above.
+
+In order to deploy the full stack, package the CloudFormation template using the
+following command. Make sure to set `S3_BUCKET` correctly by specifying the name
+of the bucket used to store all build artifacts – create a bucket if necessary.
 
     aws cloudformation package \
         --template-file cloudformation.yaml \
@@ -75,6 +81,7 @@ curl -X "POST" "https://<API_GATEWAY>.execute-api.<AWS_REGION>.amazonaws.com/<ST
 }
 ```
 
+
 ### `400 Bad Request` for a missing request body
 
 ```sh
@@ -88,6 +95,7 @@ curl -X "POST" "https://<API_GATEWAY>.execute-api.<AWS_REGION>.amazonaws.com/<ST
   "message": "Invalid request body"
 }
 ```
+
 
 ### `422 Unprocessable Entity` for an empty note
 
@@ -105,6 +113,7 @@ curl -X "POST" "https://<API_GATEWAY>.execute-api.<AWS_REGION>.amazonaws.com/<ST
   "message" : "Invalid input"
 }
 ```
+
 
 ### `403 Forbidden` for an unknown resource
 
