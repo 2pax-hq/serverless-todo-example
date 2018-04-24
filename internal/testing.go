@@ -37,7 +37,7 @@ func EqualJSON(lhs, rhs string) (bool, error) {
 // - The CloudFormation template must include a `AWS::Serverless::Function`
 // 	 resource for the with the name specified in `function`.
 // - The Lambda handler specified in the CloudFormation template resource must
-//	 be compiled before running the test.
+//	 be compiled with a linux target before running the test.
 func SamInvoke(template, function, event string) (string, error) {
 
 	mrand.Seed(time.Now().Unix())
@@ -74,17 +74,14 @@ func SamInvoke(template, function, event string) (string, error) {
 		return "", err
 	}
 
-	// If error response has been encoded and written to stderr, extract and the
-	// JSON string from errorMessage.
+	// check stderr for the wrapped error shape.
+	// if found extract the wrapped json string and unescape
+	// else return stdout.
 	r := regexp.MustCompile(`errorMessage\": \"(.*)\",`)
 	match := r.FindStringSubmatch(errb.String())
 	if len(match) == 2 {
-		// unescape json string
-		if len(match) == 2 {
-			// cleanup escape symbols
-			str := strings.Replace(match[1], "\\", "", -1)
-			return str, nil
-		}
+		inner := strings.Replace(match[1], "\\", "", -1)
+		return inner, nil
 	}
 	return outb.String(), nil
 }
