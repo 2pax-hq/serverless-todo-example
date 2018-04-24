@@ -5,6 +5,8 @@ Transform: "AWS::Serverless-2016-10-31"
 Description: "To-Do Example"
 
 Parameters:
+  # For more details on managing environments in serverless applications see the
+  # article at https://medium.com/2pax/managing-multi-environment-serverless-architecture-using-aws-an-investigation-6cd6501d261e
   StageName:
     Type: String
 
