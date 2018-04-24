@@ -1,0 +1,370 @@
+---
+
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: "AWS::Serverless-2016-10-31"
+Description: "To-Do Example"
+
+Parameters:
+  # For more details on managing environments in serverless applications see the
+  # article at https://medium.com/2pax/managing-multi-environment-serverless-architecture-using-aws-an-investigation-6cd6501d261e
+  StageName:
+    Type: String
+
+Resources:
+
+  ToDoAPI:
+    Type: "AWS::Serverless::Api"
+    Properties:
+      Name: !Sub "To-Do API - ${StageName}"
+      StageName: !Ref StageName
+
+      MethodSettings: [{
+        # Turn on Error logging
+        "LoggingLevel": "ERROR",
+
+        # Enable Metrics
+        "MetricsEnabled": True,
+
+        # Trace-level Logging
+        "DataTraceEnabled": True,
+
+        # On all Paths & methods
+        "ResourcePath": "/*",
+        "HttpMethod": "*",
+      }]
+
+      # OpenAPI definition
+      DefinitionBody:
+        swagger: "2.0"
+        info:
+          title:
+            Ref: "AWS::StackName"
+
+      
+        #
+        # Request validators allow API Gateway to perform basic validation of an API request before proceeding with the integration request.
+        #
+        # https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-method-request-validation.html
+        #
+        x-amazon-apigateway-request-validators:
+          paramsAndBody:
+            validateRequestBody: true
+            validateRequestParameters: true
+        x-amazon-apigateway-request-validator: paramsAndBody
+
+        #
+        # Gateway Responses are responses triggered if something prevents a request from reaching the integration.
+        # Customizing them here will effect all errors of that type for the entire API.
+        #
+        # https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-gatewayResponse-definition.html
+        #
+        x-amazon-apigateway-gateway-responses:
+          DEFAULT_4XX:
+            defaultResponse: false
+            responseParameters:
+              gatewayresponse.header.Content-Type: "'application/json'"
+            responseTemplates:
+              application/json: |
+                {
+                  "code": "$context.error.responseType",
+                  "message": $context.error.messageString
+                }
+          DEFAULT_5XX:
+            defaultResponse: false
+            responseParameters:
+              gatewayresponse.header.Content-Type: "'application/json'"
+            responseTemplates: 
+              application/json: |
+                {
+                  "code": "INTERNAL_ERROR",
+                  "message": "Internal error"
+                }
+
+        # Models
+        definitions:
+          Empty:
+            type: object
+            title: Empty Schema
+
+          Error:
+            type: object
+            properties:
+              code:
+                type: string
+              message:
+                type: string
+
+          Task:
+            type: object
+            properties:
+              id:
+                type: string
+              done:
+                type: string
+              note:
+                type: string
+              created_at:
+                type: string
+              updated_at:
+                type: string
+
+          AddTaskBody:
+            type: object
+            properties:
+              note:
+                type: string
+            required:
+              - note
+
+        # Paths
+        paths:
+
+          /tasks:
+
+            #
+            # add task
+            #
+            post:
+              summary: Add task
+              operationId: addTask
+
+              parameters:
+                - name: body
+                  in: body
+                  schema:
+                   $ref: "#/definitions/AddTaskBody"
+                  required: true
+
+              responses:
+                "201":
+                  schema:
+                    $ref: "#/definitions/Task"
+                  headers:
+                    Content-Type:
+                      type: "string"
+                "400":
+                  schema:
+                    $ref: "#/definitions/Error"
+                  headers:
+                    Content-Type:
+                      type: "string"
+                "422":
+                  schema:
+                    $ref: "#/definitions/Error"
+                  headers:
+                    Content-Type:
+                      type: "string"
+                "500":
+                  schema:
+                    $ref: "#/definitions/Error"
+                  headers:
+                    Content-Type:
+                      type: "string"
+
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws
+                uri: !Sub "arn:aws:apigateway:eu-west-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:${AWS::AccountId}:function:AddTask${StageName}/invocations"
+                passthroughBehavior: never
+                requestTemplates:
+                  application/json: |
+                    {
+                      "note" : $input.json('$.note')
+                    }
+                responses:
+                  #
+                  # response mapping below is responsible for mapping an error response's `errorMessage` field to a standardised error response and status code.
+                  # because we use a `aws` type integration we match on the error string, if we used a `aws_proxy` type integration we would match on status code.
+                  #
+
+                  #
+                  # success mapping
+                  #
+                  "":
+                    statusCode: "201"
+                    responseParameters:
+                      method.response.header.Content-Type : "'application/json'"
+
+                  #
+                  # error mappings
+                  #
+                  ".*\\\"code\\\":\\\"INVALID_INPUT\\\".*":
+                    statusCode: "422"
+                    responseParameters:
+                      method.response.header.Content-Type : "'application/json'"
+                    responseTemplates:
+                      application/json: |
+                        #set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage')))
+                        {
+                          "code" : "$errorMessageObj.code",
+                          "message" : "$errorMessageObj.public_message"
+                        }
+
+                  ".*\\\"code\\\":\\\"BAD_INPUT\\\".*":
+                    statusCode: "400"
+                    responseParameters:
+                      method.response.header.Content-Type : "'application/json'"
+                    responseTemplates:
+                      application/json: |
+                        #set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage')))
+                        {
+                          "code" : "$errorMessageObj.code",
+                          "message" : "$errorMessageObj.public_message"
+                        }
+
+                  # catch-all for any remaining errors
+                  "(\n|.)+":
+                    statusCode: "500"
+                    responseParameters:
+                      method.response.header.Content-Type : "'application/json'"
+                    responseTemplates:
+                      application/json: |
+                        {
+                          "code" : "INTERNAL_ERROR",
+                          "message" : "Internal error"
+                        }
+
+          /tasks/{taskId}:
+
+            #
+            # get task
+            #
+            get:
+              summary: Get single task
+              operationId: getTask
+
+              parameters:
+                - name: taskId
+                  in: path
+                  type: string
+                  format: uuid
+                  required: true
+
+              responses:
+                "200":
+                  schema:
+                    $ref: "#/definitions/Task"
+                  headers:
+                    Content-Type:
+                      type: "string"
+                "404":
+                  schema:
+                    $ref: "#/definitions/Error"
+                  headers:
+                    Content-Type:
+                      type: "string"
+                "500":
+                  schema:
+                    $ref: "#/definitions/Error"
+                  headers:
+                    Content-Type:
+                      type: "string"
+
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws
+                uri: !Sub "arn:aws:apigateway:eu-west-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:${AWS::AccountId}:function:GetTask${StageName}/invocations"
+                passthroughBehavior: never
+                requestTemplates:
+                  application/json: |
+                    {
+                      "task" : "$input.params('taskId')"
+                    }
+                responses:
+                  #
+                  # response mapping below is responsible for mapping an error response's `errorMessage` field to a standardised error response and status code.
+                  # because we use a `aws` type integration we match on the error string, if we used a `aws_proxy` type integration we would match on status code.
+                  #
+
+                  #
+                  # success mapping
+                  #
+                  "":
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Content-Type : "'application/json'"
+
+                  #
+                  # error mappings
+                  #
+                  ".*\\\"code\\\":\\\"[A-Z_]+_NOT_FOUND\\\".*":
+                    statusCode: "404"
+                    responseParameters:
+                      method.response.header.Content-Type : "'application/json'"
+                    responseTemplates:
+                      application/json: |
+                        #set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage')))
+                        {
+                          "code" : "$errorMessageObj.code",
+                          "message" : "$errorMessageObj.public_message"
+                        }
+
+                  # catch-all for any remaining errors
+                  "(\n|.)+":
+                    statusCode: "500"
+                    responseParameters:
+                      method.response.header.Content-Type : "'application/json'"
+                    responseTemplates:
+                      application/json: |
+                        {
+                          "code" : "INTERNAL_ERROR",
+                          "message" : "Internal error"
+                        }
+
+                        
+  #
+  # Add Task Function
+  #
+  AddTask:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      FunctionName: !Sub "AddTask${StageName}"
+      Handler: handler
+      Runtime: go1.x
+      Timeout: 5
+      CodeUri: cmd/add-task/
+      Tags:
+        Environment: !Ref StageName
+
+  # Allow APIGW to invoke the function
+  AddTaskResourcePermission:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !Ref AddTask
+      Principal: apigateway.amazonaws.com
+
+  #
+  # Get Task Function
+  #
+  GetTask:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      FunctionName: !Sub "GetTask${StageName}"
+      Handler: handler
+      Runtime: go1.x
+      Timeout: 5
+      CodeUri: cmd/get-task/
+      Tags:
+        Environment: !Ref StageName
+
+  # Allow APIGW to invoke the function
+  GetTaskResourcePermission:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !Ref GetTask
+      Principal: apigateway.amazonaws.com
+
+      
+Outputs:
+  ApiUrl:
+    Description: URL of your API endpoint
+    Value: !Join
+      - ''
+      - - https://
+        - !Ref ToDoAPI
+        - '.execute-api.'
+        - !Ref 'AWS::Region'
+        - '.amazonaws.com/'
+        - !Ref StageName
