@@ -4,6 +4,19 @@ Simple to-do app using AWS API Gateway and AWS Lambda. This is the sample code
 to the [detailed walkthrough](https://medium.com/2pax/fe0e10808732) on error
 handling in a serverless architecture.
 
+_**Note:** This project is mainly for demonstration purposes and includes only
+the backend of a typical to-do app – limited to add and get single 
+tasks. Also, the implementation uses a mock store and doesn't store tasks 
+persistently._
+
+_Feel free to play around with the sample code to extend the functionality or 
+add an implementation for persistent storage, such as DynamoDB, PostreSQL or 
+others._
+
+_See [below](#try-yourself) for how test the API using `curl` or use a HTTP
+client of your choice._
+
+
 ## Prerequisites
 
 You'll need the following tools to build, run and deploy the app. In order to
